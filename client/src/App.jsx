@@ -5,6 +5,21 @@ import LogForm from "./components/LogForm";
 import AnalysisCard from "./components/AnalysisCard";
 import "./App.css";
 
+
+
+// Gemini Response Format (JSON):
+//   {
+//     "source_ip" : <src_ip>,
+//     "dest_ip" : <dest_ip>,
+//     "protocol": <ip | tcp>,
+//     "threat_score": <number>,
+//     "threat_level": "<Low | Medium | High>",
+//     "reason": "<short explanation>",
+//     "threat_type": <attack_name | normal_traffic>,
+//   }
+
+
+
 function App() {
   const [inputLog, setInputLog] = useState(null);
   const [response, setResponse] = useState(null);

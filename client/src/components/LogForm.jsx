@@ -1,9 +1,23 @@
+// TODO: 
+// s1. setTimeout(2.5 seconds)
+// s2. fetch req for retrieving log 
+
+// Gemini Response Format (JSON):
+//   {
+//     "source_ip" : <src_ip>,
+//     "dest_ip" : <dest_ip>,
+//     "protocol": <ip | tcp>,
+//     "threat_score": <number>,
+//     "threat_level": "<Low | Medium | High>",
+//     "reason": "<short explanation>",
+//     "threat_type": <attack_name | normal_traffic>,
+//   } 
+
+
 import { useState } from "react";
 
 function LogForm({ onSubmit }) {
   const [input, setInput] = useState("");
-
-  // TODO: setTimeout(5 seconds)-> fetch req for retrieving log
 
   const handleSubmit = (e) => {
     e.preventDefault();

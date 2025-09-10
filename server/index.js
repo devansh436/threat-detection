@@ -7,9 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// The client gets the API key from the environment variable `GEMINI_API_KEY`.
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 async function getGeminiResponse(inputLog) {
   const prompt = `You are a cybersecurity threat detection assistant. 
   I will provide you with raw system logs. 
@@ -27,11 +25,15 @@ async function getGeminiResponse(inputLog) {
 
   Output Format (JSON):
   {
+    "source_ip" : <src_ip>,
+    "dest_ip" : <dest_ip>,
+    "protocol": <ip | tcp>,
     "threat_score": <number>,
     "threat_level": "<Low | Medium | High>",
-    "reason": "<short explanation>"
+    "reason": "<short explanation>",
+    "threat_type": <attack_name | normal_traffic>,
   }
-  DO NOT USE MARKDOWN TEXT TO REPRESENT JSON, WRITE JSON IN PLAINTEXT.  
+  DO NOT USE MARKDOWN TEXT TO REPRESENT JSON, WRITE JSON IN PLAINTEXT.
   `;
 
   const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -39,17 +41,18 @@ async function getGeminiResponse(inputLog) {
   return result.response.text();
 }
 
-// TODO: get req to retrieve logs
-// app.get(....) {}
 
 app.get("/", (req, res) => {
   res.send({ data: "Hello, Express!" });
 });
 
-app.post("/gemini-test", async (req, res) => {
+
+// TODO: get req to retrieve logs
+app.get("/gemini-test", async (req, res) => {
   try {
-    console.log(req.body);
-    const { inputLog } = req.body;
+    // TODO:
+    // random log from csv selection logic
+    // const { inputLog } = ...;
     const output = await getGeminiResponse(inputLog);
     res.json({ response: output });
   } catch (err) {
