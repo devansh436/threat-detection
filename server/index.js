@@ -52,20 +52,26 @@ app.get("/", (req, res) => {
 
 import fs from "fs";
 import path from "path";
+import xlsx from "xlsx";
 
 app.get("/get-log", async (req, res) => {
   const logFile = path.join(__dirname, "logs", "1000sample.xlsx");
   try {
-    const data = fs.readFileSync(logFile, "utf8");
-    const lines = data.split(/\r?\n/).filter(Boolean);
-    if (lines.length === 0)
+    const workbook = xlsx.readFile(logFile);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const logs = xlsx.utils.sheet_to_json(sheet);
+    if (logs.length === 0)
       return res
         .status(404)
         .json({ response: null, log: null, error: "No logs found" });
-    // Pick a random log (skip header if present)
-    const hasHeader = lines[0].includes(",");
-    const logLines = hasHeader ? lines.slice(1) : lines;
-    const randomLog = logLines[Math.floor(Math.random() * logLines.length)];
+    // Pick a random log
+    const randomLogObj = logs[Math.floor(Math.random() * logs.length)];
+    // Convert log object to string for Gemini
+    const randomLog = Object.entries(randomLogObj)
+      .map(([k, v]) => ${k}: ${v})
+      .join(", ");
+
     // Send to Gemini
     try {
       const output = await getGeminiResponse(randomLog);
