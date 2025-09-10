@@ -39,6 +39,9 @@ async function getGeminiResponse(inputLog) {
   return result.response.text();
 }
 
+// TODO: get req to retrieve logs
+// app.get(....) {}
+
 app.get("/", (req, res) => {
   res.send({ data: "Hello, Express!" });
 });
