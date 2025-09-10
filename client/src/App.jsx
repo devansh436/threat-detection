@@ -21,35 +21,53 @@ import "./App.css";
 
 
 function App() {
-  const [inputLog, setInputLog] = useState(null);
-  const [response, setResponse] = useState(null);
+  const [logs, setLogs] = useState([]);
 
   useEffect(() => {
-    if (inputLog == null) return;
-
-    fetch("http://localhost:3000/gemini-test", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ inputLog }),
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        try {
-          const parsed = JSON.parse(res.response);
-          setResponse(parsed);
-        } catch (err) {
-          console.error(err);
-          setResponse({ error: "Invalid response format" });
-        }
-      });
-  }, [inputLog]);
+    const interval = setInterval(() => {
+      fetch("http://localhost:3000/get-log")
+        .then((res) => res.json())
+        .then((res) => {
+          try {
+            const parsed = JSON.parse(res.response);
+            setLogs((prev) => [parsed, ...prev]);
+          } catch (err) {
+            // Optionally show error log
+          }
+        })
+        .catch(() => {
+          // Optionally show error log
+        });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="page">
       <Navbar />
       <main className="content-container">
-        <LogForm onSubmit={setInputLog} />
-        <AnalysisCard response={response} />
+        <h2 style={{ marginBottom: '1rem' }}>Live SIEM Log Stream</h2>
+        <div>
+          {logs.length === 0 ? (
+            <div style={{ color: 'red', marginBottom: '2em' }}>No valid log data or error.</div>
+          ) : (
+            logs.map((response, idx) =>
+              response && !response.error ? (
+                <div key={idx} style={{
+                  background: '#222', color: '#fff', borderRadius: '8px', padding: '1.5em', marginBottom: '2em', boxShadow: '0 2px 8px #0002', maxWidth: '500px', fontFamily: 'monospace'
+                }}>
+                  <div><b>Source IP:</b> {response.source_ip}</div>
+                  <div><b>Destination IP:</b> {response.dest_ip}</div>
+                  <div><b>Protocol:</b> {response.protocol}</div>
+                  <div><b>Threat Score:</b> <span style={{ color: response.threat_level === 'High' ? 'red' : response.threat_level === 'Medium' ? 'orange' : 'lime' }}>{response.threat_score}</span></div>
+                  <div><b>Threat Level:</b> <span style={{ color: response.threat_level === 'High' ? 'red' : response.threat_level === 'Medium' ? 'orange' : 'lime' }}>{response.threat_level}</span></div>
+                  <div><b>Threat Type:</b> {response.threat_type}</div>
+                  <div><b>Reason:</b> {response.reason}</div>
+                </div>
+              ) : null
+            )
+          )}
+        </div>
       </main>
       <Footer />
     </div>

@@ -2,6 +2,9 @@ import express from "express"; // needs "type": "module" in package.json
 import cors from "cors";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import "dotenv/config";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(cors());
@@ -41,23 +44,47 @@ async function getGeminiResponse(inputLog) {
   return result.response.text();
 }
 
-
 app.get("/", (req, res) => {
   res.send({ data: "Hello, Express!" });
 });
 
-
 // TODO: get req to retrieve logs
-app.get("/gemini-test", async (req, res) => {
+
+import fs from "fs";
+import path from "path";
+
+app.get("/get-log", async (req, res) => {
+  const logFile = path.join(__dirname, "logs", "demo_log.csv");
   try {
-    // TODO:
-    // random log from csv selection logic
-    // const { inputLog } = ...;
-    const output = await getGeminiResponse(inputLog);
-    res.json({ response: output });
+    const data = fs.readFileSync(logFile, "utf8");
+    const lines = data.split(/\r?\n/).filter(Boolean);
+    if (lines.length === 0)
+      return res
+        .status(404)
+        .json({ response: null, log: null, error: "No logs found" });
+    // Pick a random log (skip header if present)
+    const hasHeader = lines[0].includes(",");
+    const logLines = hasHeader ? lines.slice(1) : lines;
+    const randomLog = logLines[Math.floor(Math.random() * logLines.length)];
+    // Send to Gemini
+    try {
+      const output = await getGeminiResponse(randomLog);
+      res.json({ response: output, log: randomLog });
+    } catch (geminiErr) {
+      console.error(geminiErr);
+      res.json({
+        response: null,
+        log: randomLog,
+        error: geminiErr.message || "Gemini error",
+      });
+    }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Gemini request failed." });
+    res.json({
+      response: null,
+      log: null,
+      error: "Failed to process log file.",
+    });
   }
 });
 
