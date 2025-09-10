@@ -54,7 +54,7 @@ import fs from "fs";
 import path from "path";
 
 app.get("/get-log", async (req, res) => {
-  const logFile = path.join(__dirname, "logs", "demo_log.csv");
+  const logFile = path.join(__dirname, "logs", "1000sample.xlsx");
   try {
     const data = fs.readFileSync(logFile, "utf8");
     const lines = data.split(/\r?\n/).filter(Boolean);
