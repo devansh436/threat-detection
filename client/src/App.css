@@ -1,0 +1,63 @@
+.container {
+  max-width: 600px;
+  margin: 40px auto;
+  font-family: Arial, sans-serif;
+}
+
+.form {
+  display: flex;
+  gap: 10px;
+}
+
+input {
+  flex: 1;
+  padding: 10px;
+  font-size: 16px;
+}
+
+button {
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0056b3;
+}
+
+.card {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  color: #000;
+}
+
+.card.low {
+  background: #28a745;
+}
+
+.card.medium {
+  background: #ffc107;
+  color: #000;
+}
+
+.card.high {
+  background: #dc3545;
+}
+
+.level {
+  font-weight: bold;
+}
+
+.waiting {
+  margin-top: 20px;
+  color: #666;
+}
+
+.error {
+  margin-top: 20px;
+  color: red;
+  font-weight: bold;
+}
