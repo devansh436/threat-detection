@@ -38,7 +38,7 @@ function App() {
         .catch(() => {
           // Optionally show error log
         });
-    }, 1000);
+    }, 6000);
     return () => clearInterval(interval);
   }, []);
 

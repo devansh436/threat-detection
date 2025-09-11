@@ -39,7 +39,7 @@ async function getGeminiResponse(inputLog) {
   DO NOT USE MARKDOWN TEXT TO REPRESENT JSON, WRITE JSON IN PLAINTEXT.
   `;
 
-  const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = ai.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
   const result = await model.generateContent(prompt);
   return result.response.text();
 }
@@ -69,7 +69,7 @@ app.get("/get-log", async (req, res) => {
     const randomLogObj = logs[Math.floor(Math.random() * logs.length)];
     // Convert log object to string for Gemini
     const randomLog = Object.entries(randomLogObj)
-      .map(([k, v]) => ${k}: ${v})
+      .map(([k, v]) => `${k}: ${v}`)
       .join(", ");
 
     // Send to Gemini
