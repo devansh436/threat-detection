@@ -24,6 +24,9 @@ function Navbar() {
         <Link className="nav-link" to="/analysis">
           Analysis
         </Link>
+        <Link className="nav-link" to="/map">
+          Map
+        </Link>
       </div>
     </nav>
   );
