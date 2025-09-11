@@ -21,7 +21,7 @@ async function getGeminiResponse(inputLog) {
     - 1 to 30 = Low threat
     - 31 to 70 = Medium threat
     - 71 to 100 = High threat
-  3. Explain briefly why you assigned this score.
+  3. Explain briefly in 1-2 lines why you assigned this score.
 
   Input Log:
   ${inputLog}
