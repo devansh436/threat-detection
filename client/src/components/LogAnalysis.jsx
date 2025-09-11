@@ -11,13 +11,13 @@ function LogAnalysis({ response }) {
     <div
       style={{
         background: `linear-gradient(135deg, ${color}1A, ${color}0D)`,
-        backdropFilter: "blur(12px)",
+        backdropFilter: "blur(8px)",
         border: `1px solid ${color}30`,
-        borderRadius: "16px",
-        padding: "1rem",
-        marginBottom: "1.5rem",
-        boxShadow: `0 8px 32px ${color}15`,
-        maxWidth: "600px",
+        borderRadius: "10px",
+        padding: "0.6rem 0.8rem",
+        marginBottom: "1rem",
+        boxShadow: `0 4px 16px ${color}10`,
+        maxWidth: "480px",
         fontFamily: "'JetBrains Mono', monospace",
         position: "relative",
         overflow: "hidden",
@@ -40,8 +40,8 @@ function LogAnalysis({ response }) {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "1.25rem",
-            paddingBottom: "0.75rem",
+            marginBottom: "0.7rem",
+            paddingBottom: "0.4rem",
             borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
@@ -49,20 +49,20 @@ function LogAnalysis({ response }) {
             style={{
               color: "#f8fafc",
               margin: 0,
-              fontSize: "1.25rem",
+              fontSize: "1rem",
               fontWeight: "700",
               display: "flex",
               alignItems: "center",
-              gap: "0.5rem",
+              gap: "0.35rem",
             }}
           >
             <span
               style={{
-                width: "8px",
-                height: "8px",
+                width: "6px",
+                height: "6px",
                 borderRadius: "50%",
                 background: color,
-                boxShadow: `0 0 12px ${color}80`,
+                boxShadow: `0 0 8px ${color}80`,
               }}
             />
             Network Analysis
@@ -71,12 +71,12 @@ function LogAnalysis({ response }) {
             style={{
               background: color,
               color: response.threat_level === "Low" ? "#0f172a" : "#fff",
-              padding: "0.25rem 0.75rem",
+              padding: "0.15rem 0.5rem",
               borderRadius: "999px",
-              fontSize: "0.75rem",
+              fontSize: "0.68rem",
               fontWeight: "700",
               textTransform: "uppercase",
-              letterSpacing: "0.5px",
+              letterSpacing: "0.4px",
             }}
           >
             {response.threat_level}
@@ -84,13 +84,13 @@ function LogAnalysis({ response }) {
         </div>
 
         {/* Content Grid */}
-        <div style={{ display: "grid", gap: "0.6rem" }}>
+  <div style={{ display: "grid", gap: "0.4rem" }}>
           {/* Connection Details */}
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
-              gap: "1rem",
+              gap: "0.5rem",
             }}
           >
             {[
@@ -101,7 +101,7 @@ function LogAnalysis({ response }) {
                 <div
                   style={{
                     color: "#94a3b8",
-                    fontSize: "0.875rem",
+                    fontSize: "0.75rem",
                   }}
                 >
                   {label}
@@ -111,8 +111,8 @@ function LogAnalysis({ response }) {
                     color: "#e2e8f0",
                     fontWeight: "600",
                     background: "rgba(255, 255, 255, 0.05)",
-                    padding: "0.5rem 0.75rem",
-                    borderRadius: "8px",
+                    padding: "0.35rem 0.5rem",
+                    borderRadius: "6px",
                     border: "1px solid rgba(255, 255, 255, 0.08)",
                   }}
                 >
@@ -127,14 +127,14 @@ function LogAnalysis({ response }) {
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
-              gap: "1rem",
+              gap: "0.5rem",
             }}
           >
             <div>
               <div
                 style={{
                   color: "#94a3b8",
-                  fontSize: "0.875rem",
+                  fontSize: "0.75rem",
                 }}
               >
                 Protocol
@@ -144,8 +144,8 @@ function LogAnalysis({ response }) {
                   color: "#e2e8f0",
                   fontWeight: "600",
                   background: "rgba(255, 255, 255, 0.05)",
-                  padding: "0.5rem 0.75rem",
-                  borderRadius: "8px",
+                  padding: "0.35rem 0.5rem",
+                  borderRadius: "6px",
                   border: "1px solid rgba(255, 255, 255, 0.08)",
                 }}
               >
@@ -166,21 +166,21 @@ function LogAnalysis({ response }) {
                 style={{
                   color: color,
                   fontWeight: "700",
-                  fontSize: "1.125rem",
+                  fontSize: "0.95rem",
                   background: "rgba(255, 255, 255, 0.05)",
-                  padding: "0.5rem 0.75rem",
-                  borderRadius: "8px",
+                  padding: "0.35rem 0.5rem",
+                  borderRadius: "6px",
                   border: "1px solid rgba(255, 255, 255, 0.08)",
                   display: "flex",
                   alignItems: "center",
-                  gap: "0.5rem",
+                  gap: "0.3rem",
                 }}
               >
                 {response.threat_score}
                 <div
                   style={{
                     flex: 1,
-                    height: "4px",
+                    height: "3px",
                     background: "rgba(255, 255, 255, 0.1)",
                     borderRadius: "2px",
                     overflow: "hidden",
@@ -200,7 +200,7 @@ function LogAnalysis({ response }) {
           </div>
 
           {/* Threat Details */}
-          {[
+          {[ 
             {
               label: "Threat Type",
               value: response.threat_type,
@@ -212,7 +212,8 @@ function LogAnalysis({ response }) {
               bg: "rgba(255, 255, 255, 0.03)",
               style: {
                 fontFamily: "'Inter', system-ui, sans-serif",
-                lineHeight: "1.6",
+                lineHeight: "1.4",
+                fontSize: "0.85rem",
               },
             },
           ].map(({ label, value, bg, style }) => (
@@ -220,8 +221,8 @@ function LogAnalysis({ response }) {
               <div
                 style={{
                   color: "#94a3b8",
-                  fontSize: "0.875rem",
-                  marginBottom: "0.25rem",
+                  fontSize: "0.75rem",
+                  marginBottom: "0.15rem",
                 }}
               >
                 {label}
@@ -231,8 +232,8 @@ function LogAnalysis({ response }) {
                   color: label === "Analysis Reason" ? "#cbd5e1" : "#e2e8f0",
                   fontWeight: "600",
                   background: bg,
-                  padding: "0.75rem",
-                  borderRadius: "8px",
+                  padding: "0.5rem",
+                  borderRadius: "6px",
                   border: "1px solid rgba(255, 255, 255, 0.06)",
                   ...style,
                 }}

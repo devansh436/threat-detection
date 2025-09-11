@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import LogAnalysis from "./components/LogAnalysis";
-import "./App.css";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import LogAnalysis from "../components/LogAnalysis";
+import "../App.css";
 
 function App() {
   const [logs, setLogs] = useState([]);
