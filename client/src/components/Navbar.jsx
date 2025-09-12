@@ -21,9 +21,6 @@ function Navbar() {
           About Us
         </Link>
 
-        <Link className="nav-link" to="/analysis">
-          Analysis
-        </Link>
         <Link className="nav-link" to="/map">
           Map
         </Link>
