@@ -1,6 +1,6 @@
 function Footer() {
   return (
-    <footer class="footer">
+    <footer className="footer">
       <div>Made with 💙 by</div>
       <div>Devansh, Ketan, Dharm, Devarsh & Aksh</div>
     </footer>

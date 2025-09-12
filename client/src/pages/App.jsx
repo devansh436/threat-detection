@@ -9,27 +9,23 @@ function App() {
   const { setLatestIp } = useContext(IpContext);
   const [logs, setLogs] = useState([]);
   const [error, setError] = useState(null);
+
   function getLogsPeriodically(setLogs, setError) {
     fetch("http://localhost:3000/get-log")
       .then((res) => res.json())
       .then((res) => {
-        console.log("Raw log response:", res); // Debug log
-
         try {
           const parsed = JSON.parse(res.response);
-          // Extract destination IP and log it
           const destIp = parsed.dest_ip || null;
-          console.log("Destination IP:", destIp);
           setLatestIp(destIp);
           setLogs((prev) => [parsed, ...prev]);
-          setError(null); // clear any old errors
+          setError(null);
         } catch (err) {
           setError("⚠️ Failed to parse log data");
         }
       })
-      .catch((err) => {
+      .catch(() => {
         setError("🚨 Failed to fetch logs from server");
-        console.error("Fetch error:", err); // Debug log
       });
   }
 
@@ -47,7 +43,7 @@ function App() {
         className="content-container"
         style={{
           display: "flex",
-          flexDirection: "row",
+          flexDirection: "row", // 🔥 left + right layout
           gap: "2vw",
           alignItems: "stretch",
           width: "100%",
@@ -58,24 +54,23 @@ function App() {
           minHeight: "70vh",
         }}
       >
-        {/* Log Analysis Receiver Container */}
-        <div
+        {/* Part 1: Log Receiver */}
+        <div className="analysis-box"
           style={{
             flex: 1,
             minWidth: 0,
-            maxWidth: "50%",
-            background: "rgba(17,24,39,0.85)",
+            maxWidth: "45%",
             borderRadius: "16px",
-            boxShadow: "0 2px 12px rgba(0,0,0,0.10)",
             padding: "1.5rem 1rem",
-            display: "flex",
+            display: "block",
             flexDirection: "column",
             gap: "1rem",
-            overflowY: "auto",
-            height: "auto",
+            height: "600px",
+            maxHeight: "1200px", // 🔥 fixed max height
+            overflowY: "auto", // 🔥 scroll inside
           }}
         >
-          <h2 style={{ marginBottom: "1rem" }}>Live SIEM Log Stream</h2>
+          <h2 style={{ textAlign:"center", marginBottom: "1rem" }}>Live SIEM Log Stream</h2>
 
           {error && (
             <div style={{ color: "red", marginBottom: "1.5em" }}>{error}</div>
@@ -94,18 +89,16 @@ function App() {
           )}
         </div>
 
-        {/* Second Section */}
+        {/* Part 2: Right side (stacked vertically) */}
         <div
           style={{
             flex: 1,
+            display: "flex",
             flexDirection: "column",
             minWidth: 0,
             maxWidth: "50%",
-            background: "rgba(17,24,39,0.85)",
             borderRadius: "16px",
             boxShadow: "0 2px 12px rgba(0,0,0,0.10)",
-            padding: "1.5rem 1rem",
-            display: "flex",
             alignItems: "flex-start",
             justifyContent: "flex-start",
             overflow: "hidden",
@@ -113,27 +106,12 @@ function App() {
             maxHeight: "2450px",
           }}
         >
-          <div
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "flex-start",
-            }}
-          >
+          <div style={{ width: "100%" }}>
             <PieChart threatAnalysisData={logs} />
           </div>
 
-          <div
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "flex-start",
-              marginTop: "32px",
-            }}
-          >
-            <IPTracker />
+          <div style={{ width: "100%", marginTop: "32px" }}>
+            <IPTracker threatAnalysisData={logs} />
           </div>
         </div>
       </div>

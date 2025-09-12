@@ -174,15 +174,6 @@ const PieChart = ({ threatAnalysisData = [], onClearHistory }) => {
     return slice;
   });
 
-  const containerStyle = {
-    background: 'var(--color-surface)',
-    borderRadius: 'var(--radius-lg)',
-    padding: 'var(--space-6)',
-    boxShadow: 'var(--shadow-lg)',
-    border: '1px solid rgba(255,255,255,0.06)',
-    marginTop: 'var(--space-8)'
-  };
-
   const svgStyle = {
     width: '320px',
     height: '320px',
@@ -228,8 +219,8 @@ const PieChart = ({ threatAnalysisData = [], onClearHistory }) => {
   };
 
   return (
-    <div className="form-container">
-      <div style={containerStyle}>
+    <div className="analysis-box">
+      <div>
         <h2 style={{ 
           textAlign: 'center', 
           marginBottom: 'var(--space-6)',
