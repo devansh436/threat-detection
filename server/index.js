@@ -1,9 +1,14 @@
-import express from "express"; // needs "type": "module" in package.json
+import express from "express"; // needs "type": "module"
 import cors from "cors";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import "dotenv/config";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
+import xlsx from "xlsx";
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
@@ -44,15 +49,30 @@ async function getGeminiResponse(inputLog) {
   return result.response.text();
 }
 
+// MongoDB connection
+const MONGO_URI =
+  process.env.MONGO_URI || "mongodb://localhost:27017/threat_logs";
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+const db = mongoose.connection;
+db.on("error", console.error.bind(console, "MongoDB connection error:"));
+db.once("open", () => {
+  console.log("MongoDB connected");
+});
+
+// Log schema
+const logSchema = new mongoose.Schema({
+  log: Object,
+  verdict: Object,
+  createdAt: { type: Date, default: Date.now },
+});
+const LogModel = mongoose.model("Log", logSchema);
+
 app.get("/", (req, res) => {
   res.send({ data: "Hello, Express!" });
 });
-
-// TODO: get req to retrieve logs
-
-import fs from "fs";
-import path from "path";
-import xlsx from "xlsx";
 
 app.get("/get-log", async (req, res) => {
   const logFile = path.join(__dirname, "logs", "1000sample.xlsx");
@@ -75,6 +95,15 @@ app.get("/get-log", async (req, res) => {
     // Send to Gemini
     try {
       const output = await getGeminiResponse(randomLog);
+      // Try to parse Gemini output as JSON
+      let verdict = null;
+      try {
+        verdict = JSON.parse(output);
+      } catch {
+        verdict = { raw: output };
+      }
+      // Store in MongoDB
+      await LogModel.create({ log: randomLogObj, verdict });
       res.json({ response: output, log: randomLog });
     } catch (geminiErr) {
       console.error(geminiErr);
@@ -93,6 +122,43 @@ app.get("/get-log", async (req, res) => {
     });
   }
 });
+
+app.get("/logs", async (req, res) => {
+  try {
+    const logs = await LogModel.find().sort({ createdAt: -1 }).limit(100);
+    res.json({ logs });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch logs from MongoDB." });
+  }
+});
+
+// Background job: add new logs+verdict to MongoDB every 10 seconds
+setInterval(async () => {
+  const logFile = path.join(__dirname, "logs", "1000sample.xlsx");
+  try {
+    const workbook = xlsx.readFile(logFile);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const logs = xlsx.utils.sheet_to_json(sheet);
+    if (logs.length === 0) return;
+    const randomLogObj = logs[Math.floor(Math.random() * logs.length)];
+    const randomLog = Object.entries(randomLogObj)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(", ");
+    const output = await getGeminiResponse(randomLog);
+    let verdict = null;
+    try {
+      verdict = JSON.parse(output);
+    } catch {
+      verdict = { raw: output };
+    }
+    await LogModel.create({ log: randomLogObj, verdict });
+    console.log("Added new log+verdict to MongoDB");
+  } catch (err) {
+    console.error("Failed to add log+verdict to MongoDB:", err);
+  }
+}, 10000);
 
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
