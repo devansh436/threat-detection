@@ -1,7 +1,8 @@
 function Footer() {
   return (
     <footer className="footer">
-      <p>© 2025 Threat Analyzer. All rights reserved.</p>
+      <div>Made with 💙 by</div>
+      <div>Devansh, Ketan, Dharm, Devarsh & Aksh</div>
     </footer>
   );
 }

@@ -23,33 +23,36 @@ import "./App.css";
 function App() {
   const [inputLog, setInputLog] = useState(null);
   const [response, setResponse] = useState(null);
+  const [logs, setLogs] = useState([]);
 
   useEffect(() => {
-    if (inputLog == null) return;
-
-    fetch("http://localhost:3000/gemini-test", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ inputLog }),
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        try {
-          const parsed = JSON.parse(res.response);
-          setResponse(parsed);
-        } catch (err) {
-          console.error(err);
-          setResponse({ error: "Invalid response format" });
-        }
-      });
-  }, [inputLog]);
+    const interval = setInterval(() => {
+      fetch("http://localhost:3000/logs")
+        .then((res) => res.json())
+        .then((res) => {
+          if (res.logs && Array.isArray(res.logs)) {
+            // Each log: { log: originalLogObj, verdict: modelVerdict, createdAt }
+            // Use verdict for display (same format as before)
+            setLogs(res.logs.map(l => l.verdict));
+          }
+        });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="page">
       <Navbar />
       <main className="content-container">
         <LogForm onSubmit={setInputLog} />
-        <AnalysisCard response={response} />
+        {/* Render all logs from MongoDB */}
+        {logs.length > 0 ? (
+          logs.map((log, idx) => (
+            <AnalysisCard key={idx} response={log} />
+          ))
+        ) : (
+          <div>No logs found.</div>
+        )}
       </main>
       <Footer />
     </div>

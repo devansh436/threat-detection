@@ -1,10 +1,30 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { StrictMode, useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import App from "./pages/App";
+import About from "./pages/About";
+import MapPanel from "./pages/MapPanel";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import { IpProvider } from "./components/IpContext";
+import "./index.css";
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+function Main() {
+  return (
+    <StrictMode>
+      <IpProvider>
+        <BrowserRouter>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<App />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/map" element={<MapPanel />} />
+          </Routes>
+          <Footer />
+        </BrowserRouter>
+      </IpProvider>
+    </StrictMode>
+  );
+}
+
+createRoot(document.getElementById("root")).render(<Main />);
