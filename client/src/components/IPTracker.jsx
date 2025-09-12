@@ -1,5 +1,5 @@
 import "../App.css";
-import Navbar from "../components/Navbar";
+import Navbar from "./Navbar";
 import { useState } from "react";
 
 const IPTracker = () => {
@@ -51,7 +51,7 @@ const IPTracker = () => {
     fontFamily: "Arial, sans-serif",
   };
 
-  const cardStyle = {
+  const infoCardStyle = {
     maxWidth: "1200px",
     margin: "0 auto",
     background: "white",
@@ -110,17 +110,16 @@ const IPTracker = () => {
     marginBottom: "32px",
   };
 
-  const statCardStyle = {
+  const statinfoCardStyle = {
     padding: "24px",
     borderRadius: "12px",
   };
 
   return (
     <div>
-      <Navbar />
       <div className="form-container">
-        <div className="card">
-          <h2>IP Address Tracker</h2>
+        <div className="infoCard">
+          <h2 style={{textAlign:'center'}}>IP Address Tracker</h2>
           <form
             className="form"
             onSubmit={(e) => {
@@ -141,16 +140,16 @@ const IPTracker = () => {
             </button>
           </form>
           <div style={{ marginTop: "32px" }}>
-            <div style={{ display: "flex", gap: "24px", marginBottom: "24px" }}>
-              <div className="card low" style={{ flex: 1 }}>
+            <div style={{ display: "flex", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
+              <div className="infoCard low" style={{ flex: 1 }}>
                 <h3>Total IPs</h3>
                 <p>{Object.keys(ipCounts).length}</p>
               </div>
-              <div className="card medium" style={{ flex: 1 }}>
+              <div className="infoCard medium" style={{ flex: 1 }}>
                 <h3>Total Requests</h3>
                 <p>{Object.values(ipCounts).reduce((a, b) => a + b, 0)}</p>
               </div>
-              <div className="card high" style={{ flex: 1 }}>
+              <div className="infoCard high" style={{ flex: 1 }}>
                 <h3>Most Active IP</h3>
                 <p>
                   {chartData.length > 0
@@ -164,7 +163,7 @@ const IPTracker = () => {
             </div>
             {/* Graph Section */}
             {chartData.length > 0 && (
-              <div className="card" style={{ marginTop: "24px" }}>
+              <div className="infoCard" style={{ marginTop: "24px" }}>
                 <h3 style={{ marginBottom: "20px", textAlign: "center" }}>
                   IP Address Request Distribution
                 </h3>

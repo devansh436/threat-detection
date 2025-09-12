@@ -3,43 +3,40 @@ import Navbar from "../components/Navbar";
 const team = [
   {
     name: "Devansh Deshpade",
-    skills: ["Full Stack", "React", "Node.js"],
-    linkedin: "https://linkedin.com/in/devanshdeshpade",
-    photo: null,
+    skills: ["Full Stack", "React", "Node.js", "Express"],
+    linkedin: "https://www.linkedin.com/in/devansh-deshpande-70982328b/",
+    photo: 'devansh.jpg',
   },
   {
     name: "Dharm Patel",
-    skills: ["Backend", "Python", "Security"],
-    linkedin: "https://linkedin.com/in/dharmpatel",
-    photo: null,
+    skills: ["UI/UX", "React", "Design"],
+    linkedin: "https://www.linkedin.com/in/dharm-patel-56210a265/",
+    photo: 'dharm.jpg',
   },
   {
     name: "Aksh Patel",
-    skills: ["Frontend", "UI/UX", "Vite"],
-    linkedin: "https://linkedin.com/in/akshpatel",
-    photo: null,
+    skills: ["UI/UX", "Data Visualisation"],
+    linkedin: "https://www.linkedin.com/in/aksh-patel158/",
+    photo: 'aksh.jpg',
   },
   {
     name: "Devarsh Dalwadi",
-    skills: ["DevOps", "Cloud", "Docker"],
-    linkedin: "https://linkedin.com/in/devarshdalwadi",
-    photo: null,
+    skills: ["ML", "DBMS"],
+    linkedin: "https://www.linkedin.com/in/devarshdalwadi/",
+    photo: 'devarsh.jpg',
   },
   {
     name: "Ketan Dav",
-    skills: ["ML", "Data Science", "APIs"],
-    linkedin: "https://linkedin.com/in/ketandav",
-    photo: null,
+    skills: ["APIs", "MongoDB", "React"],
+    linkedin: "https://www.linkedin.com/in/ketandav/",
+    photo: 'ketan.jpg',
   },
 ];
 
 export default function About() {
   return (
-    <div>
-      <Navbar />
-
+    <div className="page">
       <div
-        className="about-page"
         style={{
           maxWidth: 600,
           marginBottom: "10vw",
