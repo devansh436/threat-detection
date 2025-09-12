@@ -55,38 +55,46 @@ function App() {
         }}
       >
         {/* Part 1: Log Receiver */}
-        <div className="analysis-box"
+        <div
           style={{
-            flex: 1,
-            minWidth: 0,
             maxWidth: "45%",
-            borderRadius: "16px",
-            padding: "1.5rem 1rem",
-            display: "block",
-            flexDirection: "column",
-            gap: "1rem",
-            height: "600px",
-            maxHeight: "1200px", // 🔥 fixed max height
-            overflowY: "auto", // 🔥 scroll inside
           }}
         >
-          <h2 style={{ textAlign:"center", marginBottom: "1rem" }}>Live SIEM Log Stream</h2>
+          <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
+            Live SIEM Log Stream
+          </h2>
 
-          {error && (
-            <div style={{ color: "red", marginBottom: "1.5em" }}>{error}</div>
-          )}
+          <div
+            className="analysis-box"
+            style={{
+              flex: 1,
+              minWidth: '20vw',
+              width: "100%",
+              borderRadius: "16px",
+              padding: "1.5rem 1rem",
+              display: "block", // ✅ flex column so logs stack properly
+              gap: "1rem",
+              minHeight: "30vh", // ✅ keeps some presence even when empty
+              maxHeight: "215vh", // ✅ cap growth
+              overflowY: "auto", // ✅ scroll when overflowing
+            }}
+          >
+            {error && (
+              <div style={{ color: "red", marginBottom: "1.5em" }}>{error}</div>
+            )}
 
-          {!error && logs.length === 0 && (
-            <div style={{ color: "yellow", marginBottom: "2em" }}>
-              Waiting for logs...
-            </div>
-          )}
+            {!error && logs.length === 0 && (
+              <div style={{ color: "yellow", marginBottom: "2em" }}>
+                Waiting for logs...
+              </div>
+            )}
 
-          {logs.map(
-            (response, idx) =>
-              response &&
-              !response.error && <LogAnalysis key={idx} response={response} />
-          )}
+            {logs.map(
+              (response, idx) =>
+                response &&
+                !response.error && <LogAnalysis key={idx} response={response} />
+            )}
+          </div>
         </div>
 
         {/* Part 2: Right side (stacked vertically) */}
