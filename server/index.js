@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
-import xlsx from "xlsx";
+import { parse } from "csv-parse/sync";
 import axios from "axios";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -76,12 +76,10 @@ app.get("/", (req, res) => {
 });
 
 app.get("/get-log", async (req, res) => {
-  const logFile = path.join(__dirname, "logs", "1000sample.xlsx");
+  const logFile = path.join(__dirname, "logs", "demo1000.csv");
   try {
-    const workbook = xlsx.readFile(logFile);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const logs = xlsx.utils.sheet_to_json(sheet);
+    const csvData = fs.readFileSync(logFile, "utf8");
+    const logs = parse(csvData, { columns: true, skip_empty_lines: true });
     if (logs.length === 0)
       return res
         .status(404)
@@ -150,11 +148,10 @@ app.get("/logs", async (req, res) => {
 
 // --- CUSTOM ML LOGGING SECTION ---
 setInterval(async () => {
-  const logFile = path.join(__dirname, "logs", "1000sample.xlsx");
+  const logFile = path.join(__dirname, "logs", "demo1000.csv");
   try {
-    const workbook = xlsx.readFile(logFile);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const logs = xlsx.utils.sheet_to_json(sheet);
+    const csvData = fs.readFileSync(logFile, "utf8");
+    const logs = parse(csvData, { columns: true, skip_empty_lines: true });
     if (!logs.length) return;
 
     // Pick a random log
