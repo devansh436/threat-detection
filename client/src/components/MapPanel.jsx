@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useContext } from "react";
+import React, { useEffect, useRef, useState } from "react";
 const worldMapImage = '../../public/world-map(1).png';
 
 function geoToPixel(lat, lng, mapWidth = 800, mapHeight = 400) {
@@ -21,18 +21,52 @@ async function getIPLocation(ip) {
     return null;
 }
 
+
 const MapPanel = () => {
     const canvasRef = useRef(null);
     const [marker, setMarker] = useState(null);
+    const [latestIp, setLatestIp] = useState(null);
 
+    // Poll latest log every 5 seconds
+    useEffect(() => {
+        let interval;
+        async function fetchLatestIp() {
+            try {
+                const response = await fetch('http://localhost:3000/logs');
+                console.log('Fetched logs:', response);
+                const data = await response.json();
+                if (data.logs && data.logs.length > 0) {
+                    // Get the last log entry (most recent)
+                    const latestLog = data.logs[0];
+                    console.log('Latest log object:', latestLog);
+                    // Try to get dest_ip from verdict, fallback to log
+                    let ip = null;
+                    if (latestLog.verdict && latestLog.verdict.dest_ip) {
+                        ip = latestLog.verdict.dest_ip;
+                    } else if (latestLog.log && latestLog.log.dest_ip) {
+                        ip = latestLog.log.dest_ip;
+                    }
+                    console.log('Extracted dest_ip:', ip);
+                    setLatestIp(ip);
+                }
+            } catch (err) {
+                setLatestIp(null);
+            }
+        }
+        fetchLatestIp();
+        interval = setInterval(fetchLatestIp, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Show marker for latestIp
     useEffect(() => {
         let isMounted = true;
         async function showMarker() {
-            if (!ip) {
+            if (!latestIp) {
                 setMarker(null);
                 return;
             }
-            const location = await getIPLocation(ip);
+            const location = await getIPLocation(latestIp);
             if (location && location.lat && location.lon) {
                 const pixel = geoToPixel(location.lat, location.lon);
                 setMarker({ x: pixel.x, y: pixel.y, created: Date.now() });
@@ -45,9 +79,10 @@ const MapPanel = () => {
         }
         showMarker();
         return () => { isMounted = false; };
-    }, [ip]);
+    }, [latestIp]);
 
     useEffect(() => {
+        console.log('Marker updated:', marker);
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
@@ -89,10 +124,13 @@ const MapPanel = () => {
     }, [marker]);
 
     return (
-        <div className="siem-map-card">
-            <img src={worldMapImage} alt="World Map" className="siem-map-img" width={800} height={400} />
-            <canvas ref={canvasRef} width={800} height={400} className="siem-map-canvas" />
-        </div>
+        <>
+            <Navbar />
+            <div className="siem-map-card" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+                <img src={worldMapImage} alt="World Map" className="siem-map-img" width={800} height={400} />
+                <canvas ref={canvasRef} width={800} height={400} className="siem-map-canvas" />
+            </div>
+        </>
     );
 };
 

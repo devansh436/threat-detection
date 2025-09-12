@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 import xlsx from "xlsx";
+import axios from "axios";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -123,6 +124,20 @@ app.get("/get-log", async (req, res) => {
   }
 });
 
+//custome model prediction route
+app.post("/api/predict", async (req, res) => {
+  try {
+    // Forward request to Python service
+    const response = await axios.post("http://localhost:5000/predict", {
+      features: req.body.features,
+    });
+
+    res.json(response.data); // send back prediction to frontend
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get("/logs", async (req, res) => {
   try {
     const logs = await LogModel.find().sort({ createdAt: -1 }).limit(100);
@@ -133,32 +148,82 @@ app.get("/logs", async (req, res) => {
   }
 });
 
-// Background job: add new logs+verdict to MongoDB every 10 seconds
+// --- CUSTOM ML LOGGING SECTION ---
 setInterval(async () => {
   const logFile = path.join(__dirname, "logs", "1000sample.xlsx");
   try {
     const workbook = xlsx.readFile(logFile);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const logs = xlsx.utils.sheet_to_json(sheet);
-    if (logs.length === 0) return;
+    if (!logs.length) return;
+
+    // Pick a random log
     const randomLogObj = logs[Math.floor(Math.random() * logs.length)];
-    const randomLog = Object.entries(randomLogObj)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join(", ");
-    const output = await getGeminiResponse(randomLog);
-    let verdict = null;
+
+    // --- Convert log to numeric features for ML model ---
+    // Example: strings/IPs -> length, numbers -> as-is
+    const features = Object.values(randomLogObj).map((v) => {
+      if (typeof v === "number") return v;
+      if (typeof v === "string") return v.length; // placeholder conversion
+      return 0;
+    });
+
+    let prediction = 0;
     try {
-      verdict = JSON.parse(output);
-    } catch {
-      verdict = { raw: output };
+      const response = await axios.post("http://localhost:5000/predict", {
+        features,
+      });
+      prediction = response.data.prediction[0];
+    } catch (mlErr) {
+      console.error("ML service error:", mlErr.message);
+      prediction = 0; // treat as benign if ML service fails
     }
-    await LogModel.create({ log: randomLogObj, verdict });
-    console.log("Added new log+verdict to MongoDB");
+
+    // --- Handle prediction and store in MongoDB ---
+    if (prediction === 0) {
+      // Benign log
+      await LogModel.create({
+        log: randomLogObj,
+        verdict: {
+          threat_type: "normal_traffic",
+          reason: "Classified as benign (0) by custom ML model",
+        },
+      });
+      console.log("CUSTOM ML LOGGING: Added benign log to MongoDB");
+    } else if (prediction === 1) {
+      // Potentially malicious, send to Gemini for analysis
+      const logString = Object.entries(randomLogObj)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(", ");
+      const output = await getGeminiResponse(logString);
+      let verdict = null;
+      try {
+        verdict = JSON.parse(output);
+      } catch {
+        verdict = { raw: output };
+      }
+      await LogModel.create({ log: randomLogObj, verdict });
+      console.log(
+        "CUSTOM ML LOGGING: Added malicious log + Gemini verdict to MongoDB"
+      );
+    } else {
+      // Unknown prediction
+      await LogModel.create({
+        log: randomLogObj,
+        verdict: {
+          threat_type: prediction,
+          reason: "Unknown prediction from custom ML model",
+        },
+      });
+      console.log(
+        "CUSTOM ML LOGGING: Added log with unknown prediction to MongoDB"
+      );
+    }
   } catch (err) {
-    console.error("Failed to add log+verdict to MongoDB:", err);
+    console.error("CUSTOM ML LOGGING: Failed to process log:", err.message);
   }
-}, 10000);
+}, 10000); // every 10 seconds
+// every 10 seconds
 
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
