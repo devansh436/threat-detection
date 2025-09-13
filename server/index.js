@@ -5,6 +5,18 @@ import "dotenv/config";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import mongoose from "mongoose";
+// --- Endpoint Log Schemas and Models ---
+const endpointLogSchema = new mongoose.Schema(
+  {
+    // This schema is intentionally flexible (strict: false) to allow any log fields from endpoints.
+    // You can add specific fields here if you want validation or indexing.
+  },
+  { strict: false, timestamps: true }
+);
+
+const FirewallLogModel = mongoose.model("FirewallLog", endpointLogSchema);
+const WebserverLogModel = mongoose.model("WebserverLog", endpointLogSchema);
+const IDSLogModel = mongoose.model("IDSLog", endpointLogSchema);
 import fs from "fs";
 import path from "path";
 import { parse } from "csv-parse/sync";
@@ -143,15 +155,32 @@ app.get("/logs", async (req, res) => {
 });
 
 // --- CUSTOM ML LOGGING SECTION ---
+// This section fetches one log from each endpoint collection (Firewall, Webserver, IDS), merges them,
+// and sends the merged log to the ML model for prediction. The result is stored in the main LogModel.
 setInterval(async () => {
-  const logFile = path.join(__dirname, "logs", "demo1000.csv");
   try {
-    const csvData = fs.readFileSync(logFile, "utf8");
-    const logs = parse(csvData, { columns: true, skip_empty_lines: true });
-    if (!logs.length) return;
+    // --- Fetch one log from each endpoint collection ---
+    // You must define these Mongoose models elsewhere in your code
+    // Example: const FirewallLogModel = mongoose.model('FirewallLog', logSchema);
+    // Example: const WebserverLogModel = mongoose.model('WebserverLog', logSchema);
+    // Example: const IDSLogModel = mongoose.model('IDSLog', logSchema);
 
-    // Pick a random log
-    const randomLogObj = logs[Math.floor(Math.random() * logs.length)];
+    // Fetch one log from each endpoint collection
+    const firewallLog = await FirewallLogModel.findOne().sort({ createdAt: 1 });
+    const webserverLog = await WebserverLogModel.findOne().sort({
+      createdAt: 1,
+    });
+    const idsLog = await IDSLogModel.findOne().sort({ createdAt: 1 });
+
+    // If all are missing, skip
+    if (!firewallLog && !webserverLog && !idsLog) return;
+
+    // Merge logs: take non-null values from each, prioritizing leftmost
+    const mergedLog = {
+      ...firewallLog?._doc,
+      ...webserverLog?._doc,
+      ...idsLog?._doc,
+    };
 
     // --- Extract only numeric features for ML model ---
     const featureColumns = [
@@ -237,7 +266,7 @@ setInterval(async () => {
       "Idle Min",
     ];
     const features = featureColumns.map((col) => {
-      let val = randomLogObj[col];
+      let val = mergedLog[col];
       return typeof val === "string" ? Number(val) : val;
     });
 
@@ -255,7 +284,7 @@ setInterval(async () => {
     // --- Handle prediction and store in MongoDB ---
     if (prediction === 0) {
       await LogModel.create({
-        log: randomLogObj,
+        log: mergedLog,
         verdict: {
           threat_score: 0,
           threat_type: "normal_traffic",
@@ -265,7 +294,7 @@ setInterval(async () => {
       });
       console.log("CUSTOM ML LOGGING: Added benign log to MongoDB");
     } else if (prediction === 1) {
-      const logString = Object.entries(randomLogObj)
+      const logString = Object.entries(mergedLog)
         .map(([k, v]) => `${k}: ${v}`)
         .join(", ");
       const output = await getGeminiResponse(logString);
@@ -275,13 +304,13 @@ setInterval(async () => {
       } catch {
         verdict = { raw: output };
       }
-      await LogModel.create({ log: randomLogObj, verdict });
+      await LogModel.create({ log: mergedLog, verdict });
       console.log(
         "CUSTOM ML LOGGING: Added malicious log + Gemini verdict to MongoDB"
       );
     } else {
       await LogModel.create({
-        log: randomLogObj,
+        log: mergedLog,
         verdict: {
           threat_type: prediction,
           reason: "Unknown prediction from custom ML model",
