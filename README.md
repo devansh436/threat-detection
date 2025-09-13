@@ -132,6 +132,11 @@ cd client<br>
 npm install<br>
 npm run dev
 
+# 5> Start the python microservice
+
+pip install -r requirements.txt
+python3 ml-service.py
+
 <h2>🖥 Usage</h2>
 Upload network logs or use sample data<br>
 Model will process logs & generate predictions<br>
