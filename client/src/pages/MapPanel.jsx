@@ -31,21 +31,19 @@ const MapPanel = () => {
     let interval;
     async function fetchLatestIp() {
       try {
-        const response = await fetch('http://localhost:3000/logs');
-        console.log('Fetched logs:', response);
+        const response = await fetch("http://localhost:3000/logs");
+        console.log("Fetched logs:", response);
         const data = await response.json();
         if (data.logs && data.logs.length > 0) {
           // Get the last log entry (most recent)
           const latestLog = data.logs[0];
-          console.log('Latest log object:', latestLog);
-          // Try to get dest_ip from verdict, fallback to log
+          console.log("Latest log object:", latestLog);
+          // Extract Destination IP correctly
           let ip = null;
-          if (latestLog.verdict && latestLog.verdict.dest_ip) {
-            ip = latestLog.verdict.dest_ip;
-          } else if (latestLog.log && latestLog.log.dest_ip) {
-            ip = latestLog.log.dest_ip;
+          if (latestLog.log) {
+            ip = latestLog.log["Destination IP"] || latestLog.log["dest_ip"];
           }
-          console.log('Extracted dest_ip:', ip);
+          console.log("Extracted Destination IP:", ip);
           setLatestIp(ip);
         }
       } catch (err) {
@@ -76,14 +74,16 @@ const MapPanel = () => {
       }
     }
     showMarker();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [latestIp]);
 
   useEffect(() => {
-    console.log('Marker updated:', marker);
+    console.log("Marker updated:", marker);
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     let anim;
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -95,20 +95,20 @@ const MapPanel = () => {
         else opacity = 1 - age / 2;
         if (opacity > 0) {
           ctx.save();
-          ctx.shadowColor = 'red';
+          ctx.shadowColor = "red";
           ctx.shadowBlur = 18;
           ctx.beginPath();
           ctx.arc(marker.x, marker.y, 12, 0, 2 * Math.PI);
-          ctx.fillStyle = 'red';
+          ctx.fillStyle = "red";
           ctx.globalAlpha = 0.7 * opacity;
           ctx.fill();
           ctx.globalAlpha = 1;
           ctx.restore();
           ctx.beginPath();
           ctx.arc(marker.x, marker.y, 7, 0, 2 * Math.PI);
-          ctx.fillStyle = '#222';
+          ctx.fillStyle = "#222";
           ctx.fill();
-          ctx.strokeStyle = 'red';
+          ctx.strokeStyle = "red";
           ctx.lineWidth = 3;
           ctx.globalAlpha = opacity;
           ctx.stroke();
@@ -121,15 +121,14 @@ const MapPanel = () => {
     return () => cancelAnimationFrame(anim);
   }, [marker]);
 
-
   return (
     <div
       className="siem-map-card"
       style={{
-        position: "relative",   // allows stacking
+        position: "relative", // allows stacking
         width: 800,
         height: 400,
-        margin: "0 auto",       // centers horizontally
+        margin: "0 auto", // centers horizontally
       }}
     >
       <img
@@ -138,7 +137,7 @@ const MapPanel = () => {
         style={{
           width: "100%",
           height: "100%",
-          display: "block",     // removes extra bottom space
+          display: "block", // removes extra bottom space
         }}
       />
       <canvas
@@ -153,7 +152,6 @@ const MapPanel = () => {
       />
     </div>
   );
-
 };
 
 export default MapPanel;
