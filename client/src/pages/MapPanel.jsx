@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState, useContext } from "react";
-import { IpContext } from "../components/IpContext";
+import React, { useEffect, useRef, useState } from "react";
 const worldMapImage = "../../world-map(1).png";
 
 function geoToPixel(lat, lng, mapWidth = 800, mapHeight = 400) {
@@ -18,26 +17,54 @@ async function getIPLocation(ip) {
     if (data.latitude && data.longitude && !data.error) {
       return { lat: data.latitude, lon: data.longitude };
     }
-  } catch {}
+  } catch { }
   return null;
 }
 
 const MapPanel = () => {
-  const { ip } = useContext(IpContext);
-  console.log("MapPanel IP:", ip); // Debug log
   const canvasRef = useRef(null);
   const [marker, setMarker] = useState(null);
+  const [latestIp, setLatestIp] = useState(null);
+
+  // Poll latest log every 5 seconds
+  useEffect(() => {
+    let interval;
+    async function fetchLatestIp() {
+      try {
+        const response = await fetch('http://localhost:3000/logs');
+        console.log('Fetched logs:', response);
+        const data = await response.json();
+        if (data.logs && data.logs.length > 0) {
+          // Get the last log entry (most recent)
+          const latestLog = data.logs[0];
+          console.log('Latest log object:', latestLog);
+          // Try to get dest_ip from verdict, fallback to log
+          let ip = null;
+          if (latestLog.verdict && latestLog.verdict.dest_ip) {
+            ip = latestLog.verdict.dest_ip;
+          } else if (latestLog.log && latestLog.log.dest_ip) {
+            ip = latestLog.log.dest_ip;
+          }
+          console.log('Extracted dest_ip:', ip);
+          setLatestIp(ip);
+        }
+      } catch (err) {
+        setLatestIp(null);
+      }
+    }
+    fetchLatestIp();
+    interval = setInterval(fetchLatestIp, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
-    console.log("MapPanel useEffect triggered with IP:", ip); // Debug log
     let isMounted = true;
     async function showMarker() {
-      if (!ip) {
+      if (!latestIp) {
         setMarker(null);
         return;
       }
-      const location = await getIPLocation(ip);
-      console.log("Geo location result:", location); // Debug log
+      const location = await getIPLocation(latestIp);
       if (location && location.lat && location.lon) {
         const pixel = geoToPixel(location.lat, location.lon);
         setMarker({ x: pixel.x, y: pixel.y, created: Date.now() });
@@ -49,15 +76,14 @@ const MapPanel = () => {
       }
     }
     showMarker();
-    return () => {
-      isMounted = false;
-    };
-  }, [ip]);
+    return () => { isMounted = false; };
+  }, [latestIp]);
 
   useEffect(() => {
+    console.log('Marker updated:', marker);
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     let anim;
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -69,20 +95,20 @@ const MapPanel = () => {
         else opacity = 1 - age / 2;
         if (opacity > 0) {
           ctx.save();
-          ctx.shadowColor = "red";
+          ctx.shadowColor = 'red';
           ctx.shadowBlur = 18;
           ctx.beginPath();
           ctx.arc(marker.x, marker.y, 12, 0, 2 * Math.PI);
-          ctx.fillStyle = "red";
+          ctx.fillStyle = 'red';
           ctx.globalAlpha = 0.7 * opacity;
           ctx.fill();
           ctx.globalAlpha = 1;
           ctx.restore();
           ctx.beginPath();
           ctx.arc(marker.x, marker.y, 7, 0, 2 * Math.PI);
-          ctx.fillStyle = "#222";
+          ctx.fillStyle = '#222';
           ctx.fill();
-          ctx.strokeStyle = "red";
+          ctx.strokeStyle = 'red';
           ctx.lineWidth = 3;
           ctx.globalAlpha = opacity;
           ctx.stroke();
@@ -95,23 +121,39 @@ const MapPanel = () => {
     return () => cancelAnimationFrame(anim);
   }, [marker]);
 
+
   return (
-    <div className="siem-map-card">
+    <div
+      className="siem-map-card"
+      style={{
+        position: "relative",   // allows stacking
+        width: 800,
+        height: 400,
+        margin: "0 auto",       // centers horizontally
+      }}
+    >
       <img
         src={worldMapImage}
         alt="World Map"
-        className="siem-map-img"
-        width={800}
-        height={400}
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "block",     // removes extra bottom space
+        }}
       />
       <canvas
         ref={canvasRef}
         width={800}
         height={400}
-        className="siem-map-canvas"
+        style={{
+          position: "absolute", // stack on top of image
+          top: 0,
+          left: 0,
+        }}
       />
     </div>
   );
+
 };
 
 export default MapPanel;

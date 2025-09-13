@@ -50,18 +50,14 @@ async function getGeminiResponse(inputLog) {
   return result.response.text();
 }
 
-// MongoDB connection
+// --- MongoDB connection ---
 const MONGO_URI =
-  process.env.MONGO_URI || "mongodb://localhost:27017/threat_logs";
-mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-const db = mongoose.connection;
-db.on("error", console.error.bind(console, "MongoDB connection error:"));
-db.once("open", () => {
-  console.log("MongoDB connected");
-});
+  process.env.MONGO_URI || "mongodb://127.0.0.1:27017/threat_logs";
+
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err.message));
 
 // Log schema
 const logSchema = new mongoose.Schema({
@@ -158,7 +154,6 @@ setInterval(async () => {
     const randomLogObj = logs[Math.floor(Math.random() * logs.length)];
 
     // --- Convert log to numeric features for ML model ---
-    // Example: strings/IPs -> length, numbers -> as-is
     const features = Object.values(randomLogObj).map((v) => {
       if (typeof v === "number") return v;
       if (typeof v === "string") return v.length; // placeholder conversion
@@ -178,7 +173,6 @@ setInterval(async () => {
 
     // --- Handle prediction and store in MongoDB ---
     if (prediction === 0) {
-      // Benign log
       await LogModel.create({
         log: randomLogObj,
         verdict: {
@@ -188,7 +182,6 @@ setInterval(async () => {
       });
       console.log("CUSTOM ML LOGGING: Added benign log to MongoDB");
     } else if (prediction === 1) {
-      // Potentially malicious, send to Gemini for analysis
       const logString = Object.entries(randomLogObj)
         .map(([k, v]) => `${k}: ${v}`)
         .join(", ");
@@ -204,7 +197,6 @@ setInterval(async () => {
         "CUSTOM ML LOGGING: Added malicious log + Gemini verdict to MongoDB"
       );
     } else {
-      // Unknown prediction
       await LogModel.create({
         log: randomLogObj,
         verdict: {
@@ -220,7 +212,6 @@ setInterval(async () => {
     console.error("CUSTOM ML LOGGING: Failed to process log:", err.message);
   }
 }, 10000); // every 10 seconds
-// every 10 seconds
 
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
