@@ -15,7 +15,17 @@ async function getIPLocation(ip) {
     const response = await fetch(`https://ipapi.co/${ip}/json/`);
     const data = await response.json();
     if (data.latitude && data.longitude && !data.error) {
-      return { lat: data.latitude, lon: data.longitude };
+      // Return all useful info for popup
+      return {
+        lat: data.latitude,
+        lon: data.longitude,
+        city: data.city,
+        region: data.region,
+        country: data.country_name,
+        org: data.org,
+        isp: data.org || data.asn,
+        ip: data.ip,
+      };
     }
   } catch { }
   return null;
@@ -25,6 +35,7 @@ const MapPanel = () => {
   const canvasRef = useRef(null);
   const [marker, setMarker] = useState(null);
   const [latestIp, setLatestIp] = useState(null);
+  const [popup, setPopup] = useState(null);
 
   // Poll latest log every 5 seconds
   useEffect(() => {
@@ -60,17 +71,31 @@ const MapPanel = () => {
     async function showMarker() {
       if (!latestIp) {
         setMarker(null);
+        setPopup(null);
         return;
       }
       const location = await getIPLocation(latestIp);
       if (location && location.lat && location.lon) {
         const pixel = geoToPixel(location.lat, location.lon);
         setMarker({ x: pixel.x, y: pixel.y, created: Date.now() });
+        setPopup({
+          x: pixel.x,
+          y: pixel.y,
+          city: location.city,
+          region: location.region,
+          country: location.country,
+          isp: location.isp,
+          ip: location.ip,
+        });
         setTimeout(() => {
-          if (isMounted) setMarker(null);
+          if (isMounted) {
+            setMarker(null);
+            setPopup(null);
+          }
         }, 2000);
       } else {
         setMarker(null);
+        setPopup(null);
       }
     }
     showMarker();
@@ -125,11 +150,10 @@ const MapPanel = () => {
     <div
       className="siem-map-card"
       style={{
-        position: "relative", // allows stacking
+        position: "relative",
         width: 1120,
         height: 600,
-        margin: "90px auto", // centers horizontally
-
+        margin: "90px auto",
       }}
     >
       <img
@@ -139,7 +163,7 @@ const MapPanel = () => {
           width: "100%",
           height: "100%",
           borderRadius: "8px",
-          display: "block", // removes extra bottom space
+          display: "block",
         }}
       />
       <canvas
@@ -147,11 +171,36 @@ const MapPanel = () => {
         width={800}
         height={400}
         style={{
-          position: "absolute", // stack on top of image
+          position: "absolute",
           top: 0,
           left: 0,
         }}
       />
+      {popup && (
+        <div
+          style={{
+            position: "absolute",
+            left: popup.x + 20,
+            top: popup.y - 10,
+            background: "rgba(255,255,255,0.95)",
+            border: "1px solid #ccc",
+            borderRadius: 8,
+            padding: "10px 16px",
+            minWidth: 180,
+            zIndex: 10,
+            boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
+            fontSize: 15,
+          }}
+        >
+          <div style={{ fontWeight: "bold", marginBottom: 4 }}>
+            {popup.city ? `${popup.city}, ` : ""}
+            {popup.region ? `${popup.region}, ` : ""}
+            {popup.country || "Unknown Location"}
+          </div>
+          <div>IP: {popup.ip}</div>
+          {popup.isp && <div>ISP: {popup.isp}</div>}
+        </div>
+      )}
     </div>
   );
 };
