@@ -98,6 +98,17 @@ Below are some key screenshots of our ML model training and prediction workflow:
 <img src="./images/9.png" alt="Screenshot 9" />
 <img src="./images/10.png" alt="Screenshot 10" />
 
+<!-- PoC Dashboard Screenshots -->
+<img src="./images/fulld.png" alt="Full Dashboard" />
+<img src="./images/card.png" alt="Card View" />
+<img src="./images/ips.png" alt="IP Stats" />
+<img src="./images/map.png" alt="Map Panel" />
+<img src="./images/pie.png" alt="Pie Chart" />
+<img src="./images/stat.png" alt="Stats Panel" />
+
+<!-- MongoDB Dashboard Screenshot -->
+<img src="./images/mongod.png" alt="MongoDB Dashboard" />
+
 <h2>🛠 Tech Stack</h2>
 
 Frontend: React.js, Chart.js
