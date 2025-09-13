@@ -211,7 +211,7 @@ setInterval(async () => {
   } catch (err) {
     console.error("CUSTOM ML LOGGING: Failed to process log:", err.message);
   }
-}, 10000); // every 10 seconds
+}, 7000); // every 10 seconds
 
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");

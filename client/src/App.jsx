@@ -36,7 +36,7 @@ function App() {
             setLogs(res.logs.map(l => l.verdict));
           }
         });
-    }, 4000);
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
