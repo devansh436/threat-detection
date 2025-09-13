@@ -126,9 +126,10 @@ const MapPanel = () => {
       className="siem-map-card"
       style={{
         position: "relative", // allows stacking
-        width: 800,
-        height: 400,
-        margin: "0 auto", // centers horizontally
+        width: 1120,
+        height: 600,
+        margin: "90px auto", // centers horizontally
+
       }}
     >
       <img
@@ -137,6 +138,7 @@ const MapPanel = () => {
         style={{
           width: "100%",
           height: "100%",
+          borderRadius: "8px",
           display: "block", // removes extra bottom space
         }}
       />
