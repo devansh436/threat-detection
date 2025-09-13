@@ -6,36 +6,73 @@ import "../App.css";
 import IPTracker from "../components/IPTracker";
 
 function App() {
+  // Second interval to increment logCount every 10 seconds
+  const [logCount, setLogCount] = useState(() => {
+    const stored = localStorage.getItem("logCount");
+    return stored ? parseInt(stored, 10) : 1;
+  });
+  useEffect(() => {
+    const logCountIntervalId = setInterval(() => {
+      setLogCount((prev) => {
+        const next = prev + 1;
+        localStorage.setItem("logCount", next);
+        return next;
+      });
+    }, 10000);
+    return () => clearInterval(logCountIntervalId);
+  }, []);
   const { setLatestIp } = useContext(IpContext);
   const [logs, setLogs] = useState([]);
   const [error, setError] = useState(null);
 
-  function getLogsPeriodically(setLogs, setError) {
-    fetch("http://localhost:3000/get-log")
-      .then((res) => res.json())
-      .then((res) => {
-        try {
-          const parsed = JSON.parse(res.response);
-          const destIp = parsed.dest_ip || null;
-          setLatestIp(destIp);
-          setLogs((prev) => [parsed, ...prev]);
-          setError(null);
-        } catch (err) {
-          setError("⚠️ Failed to parse log data");
-        }
-      })
-      .catch(() => {
-        setError("🚨 Failed to fetch logs from server");
-      });
-  }
-
   useEffect(() => {
-    const interval = setInterval(
-      () => getLogsPeriodically(setLogs, setError),
-      7000
-    );
-    return () => clearInterval(interval);
-  }, []);
+    let intervalId;
+    async function fetchLogs() {
+      try {
+        const res = await fetch("http://localhost:3000/logs");
+        const data = await res.json();
+        console.log("Fetched logs from API:", data.logs);
+        if (data.logs && Array.isArray(data.logs)) {
+          const latestLogs = data.logs.slice(0, logCount);
+          const protocolMap = {
+            1: "ICMP", 2: "IGMP", 6: "TCP", 17: "UDP", 41: "IPv6", 47: "GRE", 50: "ESP", 51: "AH", 58: "ICMPv6", 89: "OSPF"
+          };
+          const mergedLogs = latestLogs.map(l => {
+            const log = l.log || {};
+            const verdict = l.verdict || {};
+            return {
+              source_ip: log["Source IP"],
+              dest_ip: log["Destination IP"],
+              protocol: protocolMap[log["Protocol"]] || log["Protocol"],
+              threat_score: verdict.threat_score,
+              threat_type: verdict.threat_type,
+              reason: verdict.reason,
+              threat_level: verdict.threat_level,
+            };
+          });
+          console.log("Merged logs for frontend:", mergedLogs);
+          setLogs(mergedLogs);
+          if (mergedLogs.length > 0) {
+            setLatestIp(mergedLogs[0].dest_ip || null);
+          }
+          setError(null);
+        } else {
+          console.error("No logs found or logs not an array", data);
+          setLogs([]);
+          setError("No logs found");
+        }
+      } catch (err) {
+        console.error("Error fetching logs:", err);
+        setError("🚨 Failed to fetch logs from server");
+        setLogs([]);
+      }
+
+    }
+    fetchLogs();
+
+    intervalId = setInterval(fetchLogs, 10000);
+    return () => clearInterval(intervalId);
+  }, [logCount]);
 
   return (
     <div className="page">

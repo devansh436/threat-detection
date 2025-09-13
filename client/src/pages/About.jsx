@@ -21,13 +21,13 @@ const team = [
   },
   {
     name: "Devarsh Dalwadi",
-    skills: ["ML", "DBMS"],
+    skills: ["ML", "DBMS","CyberSec"],
     linkedin: "https://www.linkedin.com/in/devarshdalwadi/",
     photo: 'devarsh.jpg',
   },
   {
     name: "Ketan Dav",
-    skills: ["APIs", "MongoDB", "React"],
+    skills: ["APIs", "MongoDB", "React","ML"],
     linkedin: "https://www.linkedin.com/in/ketandav/",
     photo: 'ketan.jpg',
   },
