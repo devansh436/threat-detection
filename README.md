@@ -59,7 +59,7 @@ Our project aims to:
 
 ```mermaid
 graph TD
-A[Dataset - CICIDS 2017] -->|Data Cleaning & Merging| B[Preprocessing Pipeline]
+A[Dataset - CICIDS 2017] -->|Data Cleaning & Merging| B[Model Training]
 B --> C[Primary ML Model - Anomaly Detection]
 C -->|Normal Traffic| D1[Store in MongoDB]
 C -->|Malicious Traffic| C2[Secondary ML Model - Attack Type Classification]
@@ -143,16 +143,16 @@ cd client<br>
 npm install<br>
 npm run dev
 
-# 5> Start the python microservice
+# 5️⃣ Start the python microservice
 
-pip install -r requirements.txt
+pip install -r requirements.txt<br>
 python3 ml-service.py
 
 <h2>🖥 Usage</h2>
 Upload network logs or use sample data<br>
 Model will process logs & generate predictions<br>
 Visit dashboard → See threats, risk scores & map visualization<br>
-Filter results by IP, threat type, or risk level
+Filter results by threat type or risk level
 
 <h2>📈 Example Output</h2>
 
