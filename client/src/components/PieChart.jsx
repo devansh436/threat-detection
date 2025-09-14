@@ -309,28 +309,28 @@ const PieChart = ({ threatAnalysisData = [], onClearHistory }) => {
         Threat Type Distribution
       </h2>
       <div className="analysis-box">
-          {threatData.length > 0 && (
-            <button
-              onClick={clearAllData}
-              style={{
-                padding: "8px 16px",
-                fontSize: "12px",
-                background: "var(--color-danger)",
-                color: "white",
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                cursor: "pointer",
-                fontWeight: "600",
-                transition: "all 0.2s ease",
-              }}
-              onMouseOver={(e) => (e.target.style.background = "#dc2626")}
-              onMouseOut={(e) =>
-                (e.target.style.background = "var(--color-danger)")
-              }
-            >
-              Clear All
-            </button>
-          )}
+        {threatData.length > 0 && (
+          <button
+            onClick={clearAllData}
+            style={{
+              padding: "8px 16px",
+              fontSize: "12px",
+              background: "var(--color-danger)",
+              color: "white",
+              border: "none",
+              borderRadius: "var(--radius-sm)",
+              cursor: "pointer",
+              fontWeight: "600",
+              transition: "all 0.2s ease",
+            }}
+            onMouseOver={(e) => (e.target.style.background = "#dc2626")}
+            onMouseOut={(e) =>
+              (e.target.style.background = "var(--color-danger)")
+            }
+          >
+            Clear All
+          </button>
+        )}
         <div>
           {threatData.length === 0 ? (
             // Empty state

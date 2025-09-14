@@ -37,13 +37,15 @@ function App() {
           const protocolMap = {
             1: "ICMP", 2: "IGMP", 6: "TCP", 17: "UDP", 41: "IPv6", 47: "GRE", 50: "ESP", 51: "AH", 58: "ICMPv6", 89: "OSPF"
           };
+
           const mergedLogs = latestLogs.map(l => {
             const log = l.log || {};
             const verdict = l.verdict || {};
+            // Extract from nested log object, fallback to empty string
             return {
-              source_ip: log["Source IP"],
-              dest_ip: log["Destination IP"],
-              protocol: protocolMap[log["Protocol"]] || log["Protocol"],
+              source_ip: log.source_ip || "",
+              dest_ip: log.dest_ip || "",
+              protocol: protocolMap[log.protocol] || log.protocol || "",
               threat_score: verdict.threat_score,
               threat_type: verdict.threat_type,
               reason: verdict.reason,

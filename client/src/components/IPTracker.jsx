@@ -34,13 +34,13 @@ const IPTracker = ({ threatAnalysisData = [] }) => {
 
   return (
     <div>
-      <h2 className="tracker-title">Destination IP Tracker</h2>
-      
+      <h2 className="tracker-title">IP Tracker</h2>
+
       <div className="analysis-box">
         <div className="form-container">
           <div>
             <p className="tracker-subtitle">
-              Automatically tracking destination IPs from threat analysis data
+              Automatically tracking IPs from threat analysis data
             </p>
 
             <button type="button" onClick={clearData} className="clear-btn">
@@ -61,9 +61,9 @@ const IPTracker = ({ threatAnalysisData = [] }) => {
                 <p>
                   {chartData.length > 0
                     ? chartData.reduce(
-                        (max, item) => (item.count > max.count ? item : max),
-                        chartData[0]
-                      ).ip
+                      (max, item) => (item.count > max.count ? item : max),
+                      chartData[0]
+                    ).ip
                     : "None"}
                 </p>
               </div>

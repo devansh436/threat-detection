@@ -10,8 +10,32 @@ import path from "path";
 import { parse } from "csv-parse/sync";
 import axios from "axios";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// --- Endpoint Log Schemas and Models ---
+const endpointLogSchema = new mongoose.Schema(
+  {},
+  { strict: false, timestamps: true }
+);
 
+// Replace with your actual cluster URLs
+const FIREWALL_MONGO_URI =
+  process.env.FIREWALL_MONGO_URI || "mongodb+srv://firewall-cluster-url";
+const WEBSERVER_MONGO_URI =
+  process.env.WEBSERVER_MONGO_URI || "mongodb+srv://webserver-cluster-url";
+const IDS_MONGO_URI =
+  process.env.IDS_MONGO_URI || "mongodb+srv://ids-cluster-url";
+
+const firewallConn = mongoose.createConnection(FIREWALL_MONGO_URI);
+const webserverConn = mongoose.createConnection(WEBSERVER_MONGO_URI);
+const idsConn = mongoose.createConnection(IDS_MONGO_URI);
+
+const FirewallLogModel = firewallConn.model("FirewallLog", endpointLogSchema);
+const WebserverLogModel = webserverConn.model(
+  "WebserverLog",
+  endpointLogSchema
+);
+const IDSLogModel = idsConn.model("IDSLog", endpointLogSchema);
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -40,7 +64,7 @@ async function getGeminiResponse(inputLog) {
     "threat_score": <number>,
     "threat_level": "<Low | Medium | High>",
     "reason": "<short explanation>",
-    "threat_type": <attack_name | normal_traffic>,
+    "threat_type": <attack_name | normal_traffic>
   }
   DO NOT USE MARKDOWN TEXT TO REPRESENT JSON, WRITE JSON IN PLAINTEXT.
   `;
@@ -50,7 +74,7 @@ async function getGeminiResponse(inputLog) {
   return result.response.text();
 }
 
-// --- MongoDB connection ---
+// --- Main MongoDB connection ---
 const MONGO_URI =
   process.env.MONGO_URI || "mongodb://127.0.0.1:27017/threat_logs";
 
@@ -59,7 +83,7 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err.message));
 
-// Log schema
+// Main log schema
 const logSchema = new mongoose.Schema({
   log: Object,
   verdict: Object,
@@ -67,6 +91,7 @@ const logSchema = new mongoose.Schema({
 });
 const LogModel = mongoose.model("Log", logSchema);
 
+// --- Routes ---
 app.get("/", (req, res) => {
   res.send({ data: "Hello, Express!" });
 });
@@ -80,31 +105,38 @@ app.get("/get-log", async (req, res) => {
       return res
         .status(404)
         .json({ response: null, log: null, error: "No logs found" });
+
     // Pick a random log
     const randomLogObj = logs[Math.floor(Math.random() * logs.length)];
-    // Convert log object to string for Gemini
-    const randomLog = Object.entries(randomLogObj)
+
+    // Normalize required fields
+    const normalizedLog = {
+      source_ip: randomLogObj["Source IP"] || "0.0.0.0",
+      dest_ip: randomLogObj[" Destination IP"] || "0.0.0.0",
+      protocol:
+        randomLogObj["Protocol"] || randomLogObj["protocol"] || "unknown",
+      ...randomLogObj,
+    };
+
+    const randomLog = Object.entries(normalizedLog)
       .map(([k, v]) => `${k}: ${v}`)
       .join(", ");
 
-    // Send to Gemini
     try {
       const output = await getGeminiResponse(randomLog);
-      // Try to parse Gemini output as JSON
       let verdict = null;
       try {
         verdict = JSON.parse(output);
       } catch {
         verdict = { raw: output };
       }
-      // Store in MongoDB
-      await LogModel.create({ log: randomLogObj, verdict });
-      res.json({ response: output, log: randomLog });
+      await LogModel.create({ log: normalizedLog, verdict });
+      res.json({ response: output, log: normalizedLog });
     } catch (geminiErr) {
       console.error(geminiErr);
       res.json({
         response: null,
-        log: randomLog,
+        log: normalizedLog,
         error: geminiErr.message || "Gemini error",
       });
     }
@@ -118,15 +150,12 @@ app.get("/get-log", async (req, res) => {
   }
 });
 
-//custome model prediction route
 app.post("/api/predict", async (req, res) => {
   try {
-    // Forward request to Python service
     const response = await axios.post("http://127.0.0.1:5000/predict", {
       features: req.body.features,
     });
-
-    res.json(response.data); // send back prediction to frontend
+    res.json(response.data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -142,18 +171,49 @@ app.get("/logs", async (req, res) => {
   }
 });
 
-// --- CUSTOM ML LOGGING SECTION ---
+// --- CUSTOM ML LOGGING ---
 setInterval(async () => {
-  const logFile = path.join(__dirname, "logs", "demo1000.csv");
   try {
-    const csvData = fs.readFileSync(logFile, "utf8");
-    const logs = parse(csvData, { columns: true, skip_empty_lines: true });
-    if (!logs.length) return;
+    const firewallLog = await FirewallLogModel.findOne().sort({
+      createdAt: -1,
+    });
+    const webserverLog = await WebserverLogModel.findOne().sort({
+      createdAt: -1,
+    });
+    const idsLog = await IDSLogModel.findOne().sort({ createdAt: -1 });
 
-    // Pick a random log
-    const randomLogObj = logs[Math.floor(Math.random() * logs.length)];
-
-    // --- Extract only numeric features for ML model ---
+    if (!firewallLog && !webserverLog && !idsLog) return;
+    // Normalize fields so source_ip, dest_ip, protocol always exist
+    const mergedLog = {
+      source_ip:
+        firewallLog?.source_ip ||
+        webserverLog?.source_ip ||
+        idsLog?.source_ip ||
+        firewallLog?.["Source IP"] ||
+        webserverLog?.["Source IP"] ||
+        idsLog?.["Source IP"] ||
+        "0.0.0.0",
+      dest_ip:
+        firewallLog?.dest_ip ||
+        webserverLog?.dest_ip ||
+        idsLog?.dest_ip ||
+        firewallLog?.["Destination IP"] ||
+        webserverLog?.["Destination IP"] ||
+        idsLog?.["Destination IP"] ||
+        "0.0.0.0",
+      protocol:
+        firewallLog?.protocol ||
+        webserverLog?.protocol ||
+        idsLog?.protocol ||
+        firewallLog?.["Protocol"] ||
+        webserverLog?.["Protocol"] ||
+        idsLog?.["Protocol"] ||
+        "unknown",
+      ...firewallLog?._doc,
+      ...webserverLog?._doc,
+      ...idsLog?._doc,
+    };
+    // --- Feature extraction ---
     const featureColumns = [
       "Source Port",
       "Destination Port",
@@ -237,7 +297,7 @@ setInterval(async () => {
       "Idle Min",
     ];
     const features = featureColumns.map((col) => {
-      let val = randomLogObj[col];
+      let val = mergedLog[col];
       return typeof val === "string" ? Number(val) : val;
     });
 
@@ -249,23 +309,23 @@ setInterval(async () => {
       prediction = response.data.prediction[0];
     } catch (mlErr) {
       console.error("ML service error:", mlErr.message);
-      prediction = 1; // treat as benign if ML service fails
+      prediction = 1; // fallback
     }
 
-    // --- Handle prediction and store in MongoDB ---
+    // --- Store in DB ---
     if (prediction === 0) {
       await LogModel.create({
-        log: randomLogObj,
+        log: mergedLog,
         verdict: {
           threat_score: 0,
           threat_type: "normal_traffic",
           reason: "Classified as benign (0) by custom ML model",
-          threat_level: "Low", // ensure color in frontend
+          threat_level: "Low",
         },
       });
       console.log("CUSTOM ML LOGGING: Added benign log to MongoDB");
     } else if (prediction === 1) {
-      const logString = Object.entries(randomLogObj)
+      const logString = Object.entries(mergedLog)
         .map(([k, v]) => `${k}: ${v}`)
         .join(", ");
       const output = await getGeminiResponse(logString);
@@ -275,26 +335,22 @@ setInterval(async () => {
       } catch {
         verdict = { raw: output };
       }
-      await LogModel.create({ log: randomLogObj, verdict });
-      console.log(
-        "CUSTOM ML LOGGING: Added malicious log + Gemini verdict to MongoDB"
-      );
+      await LogModel.create({ log: mergedLog, verdict });
+      console.log("CUSTOM ML LOGGING: Added malicious log + Gemini verdict");
     } else {
       await LogModel.create({
-        log: randomLogObj,
+        log: mergedLog,
         verdict: {
           threat_type: prediction,
           reason: "Unknown prediction from custom ML model",
         },
       });
-      console.log(
-        "CUSTOM ML LOGGING: Added log with unknown prediction to MongoDB"
-      );
+      console.log("CUSTOM ML LOGGING: Added log with unknown prediction");
     }
   } catch (err) {
     console.error("CUSTOM ML LOGGING: Failed to process log:", err.message);
   }
-}, 7000); // every 10 seconds
+}, 7000);
 
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
