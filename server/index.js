@@ -78,7 +78,8 @@ const clientBuildPath = path.join(__dirname, "dist");
 app.use(express.static(clientBuildPath));
 // --- Main MongoDB connection ---
 const MONGO_URI =
-  process.env.MONGO_URI || "mongodb://127.0.0.1:27017/threat_logs";
+  process.env.MONGO_URI ||
+  "mongodb+srv://ketan:7657@cluster0.achfpg3.mongodb.net/";
 
 mongoose
   .connect(MONGO_URI)
