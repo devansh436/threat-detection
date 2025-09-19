@@ -74,6 +74,8 @@ async function getGeminiResponse(inputLog) {
   return result.response.text();
 }
 
+const clientBuildPath = path.join(__dirname, "dist");
+app.use(express.static(clientBuildPath));
 // --- Main MongoDB connection ---
 const MONGO_URI =
   process.env.MONGO_URI || "mongodb://127.0.0.1:27017/threat_logs";
@@ -93,8 +95,9 @@ const LogModel = mongoose.model("Log", logSchema);
 
 // --- Routes ---
 app.get("/", (req, res) => {
-  res.send({ data: "Hello, Express!" });
+  res.sendFile(path.join(clientBuildPath, "index.html"));
 });
+
 
 app.get("/get-log", async (req, res) => {
   const logFile = path.join(__dirname, "logs", "demo1000.csv");
