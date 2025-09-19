@@ -156,7 +156,7 @@ app.get("/get-log", async (req, res) => {
 app.post("/api/predict", async (req, res) => {
   try {
     const response = await axios.post(
-      "https://ai-server-n5be.onrender.com:5000/predict",
+      "https://ai-server-n5be.onrender.com/predict",
       {
         features: req.body.features,
       }
@@ -310,7 +310,7 @@ setInterval(async () => {
     let prediction = 0;
     try {
       const response = await axios.post(
-        "https://ai-server-n5be.onrender.com:5000/predict",
+        "https://ai-server-n5be.onrender.com/predict",
         {
           features,
         }
