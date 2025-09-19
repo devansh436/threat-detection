@@ -98,7 +98,6 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(clientBuildPath, "index.html"));
 });
 
-
 app.get("/get-log", async (req, res) => {
   const logFile = path.join(__dirname, "logs", "demo1000.csv");
   try {
@@ -156,7 +155,7 @@ app.get("/get-log", async (req, res) => {
 app.post("/api/predict", async (req, res) => {
   try {
     const response = await axios.post(
-      "https://ai-server-n5be.onrender.com/predict",
+      "https://ai-server-n5be.onrender.com:5000/predict",
       {
         features: req.body.features,
       }
@@ -309,9 +308,12 @@ setInterval(async () => {
 
     let prediction = 0;
     try {
-      const response = await axios.post("http://127.0.0.1:5000/predict", {
-        features,
-      });
+      const response = await axios.post(
+        "https://ai-server-n5be.onrender.com:5000/predict",
+        {
+          features,
+        }
+      );
       prediction = response.data.prediction[0];
     } catch (mlErr) {
       console.error("ML service error:", mlErr.message);
