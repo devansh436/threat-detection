@@ -152,9 +152,12 @@ app.get("/get-log", async (req, res) => {
 
 app.post("/api/predict", async (req, res) => {
   try {
-    const response = await axios.post("http://127.0.0.1:5000/predict", {
-      features: req.body.features,
-    });
+    const response = await axios.post(
+      "https://ai-server-n5be.onrender.com/predict",
+      {
+        features: req.body.features,
+      }
+    );
     res.json(response.data);
   } catch (error) {
     res.status(500).json({ error: error.message });
